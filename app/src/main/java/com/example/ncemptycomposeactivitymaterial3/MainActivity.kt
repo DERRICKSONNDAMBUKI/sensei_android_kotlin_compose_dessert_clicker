@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.ncemptycomposeactivitymaterial3
 
 import android.content.ActivityNotFoundException
@@ -17,9 +19,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -48,13 +52,38 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume Called")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Log.d(TAG, "onRestart Called")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause Called")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop Called")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy Called")
+    }
+
 
 
 }
 
 @Composable
 private fun DessertClickerApp(desserts: List<Dessert>) {
-    var revenue by remember {
+    var revenue by rememberSaveable {
         mutableStateOf(0)
     }
     var dessertsSold by remember {
@@ -66,8 +95,37 @@ private fun DessertClickerApp(desserts: List<Dessert>) {
     var currentDessertPrice by remember {
         mutableStateOf(desserts[currentDessertIndex].price)
     }
-    var currentDessertImageId by remember {
+    var currentDessertImageId by rememberSaveable {
         mutableStateOf(desserts[currentDessertIndex].imageId)
+    }
+
+    Scaffold(topBar = {
+        val intentContext = LocalContext.current
+        DessertClickerAppBar(
+            onShareButtonClicked = {
+                shareSoldDessertsInformation(
+                    intentContext, dessertsSold, revenue
+                )
+            }, modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.primary)
+        )
+    }) { contentPadding ->
+        DessertClickerScreen(
+            revenue = revenue,
+            dessertsSold = dessertsSold,
+            dessertImageId = currentDessertImageId,
+            onDessertClicked = {
+//                update revenue
+                revenue += currentDessertPrice
+                dessertsSold++
+
+//                show the next dessert
+                val dessertToShow = determineDessertToShow(desserts, dessertsSold)
+                currentDessertImageId = dessertToShow.imageId
+                currentDessertPrice = dessertToShow.price
+            }, modifier = Modifier.padding(contentPadding)
+        )
     }
 }
 
